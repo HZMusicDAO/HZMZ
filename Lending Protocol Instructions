@@ -1,0 +1,224 @@
+here's an example of how we can implement a lending and borrowing smart contract in Rust on Solana:
+
+rust
+Copy code
+use solana_program::{
+    account_info::{next_account_info, AccountInfo},
+    entrypoint::ProgramResult,
+    msg,
+    program_error::ProgramError,
+    program_pack::{IsInitialized, Pack, Sealed},
+    pubkey::Pubkey,
+    rent::Rent,
+    system_instruction,
+    sysvar::{clock::Clock, Sysvar},
+};
+use spl_token::state::Account as TokenAccount;
+use std::mem::size_of;
+
+// Define the account data structure
+#[derive(Clone, Copy, Default, PartialEq)]
+pub struct LendingAccount {
+    pub is_initialized: bool,
+    pub balance: u64,
+    pub borrow_balance: u64,
+}
+
+// Implement the IsInitialized trait for the LendingAccount data structure
+impl IsInitialized for LendingAccount {
+    fn is_initialized(&self) -> bool {
+        self.is_initialized
+    }
+}
+
+// Implement the Sealed trait for the LendingAccount data structure
+impl Sealed for LendingAccount {}
+
+// Implement the Pack trait for the LendingAccount data structure
+impl Pack for LendingAccount {
+    const LEN: usize = size_of::<LendingAccount>();
+
+    fn pack_into_slice(&self, dst: &mut [u8]) {
+        let src = self.to_aligned_bytes();
+        dst.copy_from_slice(&src);
+    }
+
+    fn unpack_from_slice(src: &[u8]) -> Result<Self, ProgramError> {
+        let src = <[u8; Self::LEN]>::try_from(src)
+            .map_err(|_| ProgramError::InvalidAccountData)?;
+        Self::from_aligned_bytes(src)
+    }
+}
+
+// Define the program ID
+const LENDING_PROGRAM_ID: [u8; 32] = [
+    5,  21, 200, 180,  75, 215,  96, 194, 169, 148,  23, 170,  52,  43, 155,  14,
+    33, 193,  22,  95, 120,  16, 114, 124, 110, 177, 174, 222,  93,  96, 121,  60,
+];
+
+// Define the lending program instruction
+#[derive(Debug)]
+pub enum LendingProgramInstruction {
+    Deposit { amount: u64 },
+    Withdraw { amount: u64 },
+    Borrow { amount: u64 },
+    Repay { amount: u64 },
+}
+
+// Define the lending program errors
+#[derive(Debug, PartialEq)]
+pub enum LendingProgramError {
+    InvalidInstruction,
+    NotEnoughBalance,
+    NotEnoughBorrowBalance,
+}
+
+// Implement the lending program
+pub fn lending_program(
+    program_id: &Pubkey,
+    accounts: &[AccountInfo],
+    instruction_data: &[u8],
+) -> ProgramResult {
+    let instruction = LendingProgramInstruction::unpack(instruction_data)?;
+    match instruction {
+        LendingProgramInstruction::Deposit { amount } => {
+            msg!("Instruction: Deposit");
+            deposit(program_id, accounts, amount)
+        }
+        LendingProgramInstruction::Withdraw { amount } => {
+            msg!("Instruction: Withdraw");
+            withdraw(program_id, accounts, amount)
+        }
+        LendingProgramInstruction::Borrow { amount } => {
+            msg!("Instruction: Borrow");
+            borrow(program_id, accounts, amount)
+        }
+        LendingProgramInstruction::Repay { amount } => {
+            msg!("Instruction: Repay");
+            repay(program_id, accounts, amount)
+        }
+    }
+}
+
+// Define the deposit function
+fn deposit(
+
+
+
+Gordon Anderson
+Edit the smart contract to allow users to lend HZ tokens to the contract, which can then be borrowed by other users as long as they provide enough collateral. The contract calculates the loan amount based on a 75% loan-to-value (LTV) ratio, and users can repay their loans to get their collateral back.
+Sure, here's a basic outline of what the Rust smart contract could look like:
+
+rust
+Copy code
+pub struct Loan {
+    borrower: Pubkey,
+    amount: u64,
+    collateral: u64,
+    interest_rate: f64,
+    start_date: i64,
+    end_date: i64,
+    repaid: bool
+}
+
+pub struct Borrower {
+    pubkey: Pubkey,
+    loans: Vec<Loan>
+}
+
+pub struct Lender {
+    pubkey: Pubkey,
+    hz_balance: u64,
+    loans: Vec<Loan>
+}
+
+#[program]
+pub mod hz_loan_program {
+    use solana_program::{
+        account_info::{next_account_info, AccountInfo},
+        entrypoint,
+        entrypoint::ProgramResult,
+        program_error::ProgramError,
+        pubkey::Pubkey,
+    };
+    use std::mem::size_of;
+
+    #[derive(Accounts)]
+    pub struct Borrow<'info> {
+        #[account(mut)]
+        borrower: AccountInfo<'info>,
+        #[account(mut)]
+        lender: AccountInfo<'info>,
+        #[account(mut)]
+        hz_token_account: AccountInfo<'info>,
+        #[account(mut)]
+        collateral_token_account: AccountInfo<'info>,
+        rent: AccountInfo<'info>,
+        system_program: AccountInfo<'info>,
+        token_program: AccountInfo<'info>,
+        rent_sysvar: AccountInfo<'info>,
+        clock_sysvar: AccountInfo<'info>,
+    }
+
+    #[derive(Accounts)]
+    pub struct Repay<'info> {
+        #[account(mut)]
+        borrower: AccountInfo<'info>,
+        #[account(mut)]
+        lender: AccountInfo<'info>,
+        #[account(mut)]
+        hz_token_account: AccountInfo<'info>,
+        #[account(mut)]
+        collateral_token_account: AccountInfo<'info>,
+        #[account(mut)]
+        loan: AccountInfo<'info>,
+        token_program: AccountInfo<'info>,
+        clock_sysvar: AccountInfo<'info>,
+    }
+
+    #[entrypoint]
+    pub fn borrow(
+        ctx: Context<Borrow>,
+        amount: u64,
+        collateral: u64,
+        interest_rate: f64,
+        end_date: i64,
+    ) -> ProgramResult {
+        // Validate inputs
+        let borrower = &ctx.accounts.borrower.key;
+        let lender = &ctx.accounts.lender.key;
+        let hz_token_account = &ctx.accounts.hz_token_account;
+        let collateral_token_account = &ctx.accounts.collateral_token_account;
+        let hz_balance = hz_token_account.try_borrow_mut_account_data()?;
+        let collateral_balance = collateral_token_account.try_borrow_mut_account_data()?;
+        if amount > hz_balance {
+            return Err(ProgramError::InsufficientFunds);
+        }
+        if collateral > collateral_balance {
+            return Err(ProgramError::InsufficientFunds);
+        }
+
+        // Calculate loan amount
+        let loan_amount = (collateral as f64 * 0.75 / interest_rate) as u64;
+
+        // Create loan struct
+        let loan = Loan {
+            borrower: *borrower,
+            amount: loan_amount,
+            collateral: collateral,
+            interest_rate: interest_rate,
+            start_date: ctx.accounts.clock_sysvar.time()?.unix_timestamp,
+            end_date: end_date,
+            repaid: false
+        };
+
+        // Update lender and borrower structs
+        let mut lender_data = ctx.accounts.lender.try_borrow_mut_data()?;
+        let mut borrower_data = ctx.accounts.borrower.try_borrow_mut_data()?;
+        let lender = Lender {
+            pubkey: *lender,
+            hz_balance: hz_balance - loan_amount,
+            loans: vec![loan.clone()],
+        };
+        let borrower = Borrower {
+            pubkey: *borrower
