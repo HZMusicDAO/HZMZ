@@ -1,0 +1,381 @@
+ we're going to create an upload feature for artists to be able to directly upload their songs and videos as NFT's.
+
+Sure, we can create an NFT upload feature for artists. Here's one way to do it:
+
+First, we'll need to define the NFT data structure. We'll use the Solana NFT Program library to create and manage NFTs. Here's what the data structure would look like:
+
+rust
+Copy code
+pub struct NFTData {
+    pub name: String,
+    pub symbol: String,
+    pub uri: String,
+    pub total_supply: u64,
+    pub decimals: u8,
+    pub is_initialized: bool,
+    pub mint_authority: Pubkey,
+    pub freeze_authority: Option<Pubkey>,
+}
+Next, we'll need to define the upload_nft entrypoint function. This function will create a new NFT for the artist, assign them as the owner, and upload the NFT metadata to IPFS. Here's what the code might look like:
+
+rust
+Copy code
+use solana_program::{
+    account_info::{next_account_info, AccountInfo},
+    entrypoint::ProgramResult,
+    msg,
+    program_error::ProgramError,
+    pubkey::Pubkey,
+    sysvar::Sysvar,
+};
+use solana_program::instruction::{AccountMeta, Instruction};
+use spl_token_metadata::{
+    instruction::create_metadata_accounts, state::Metadata, state::Edition, state::MasterEditionV1,
+    state::MetadataKey,
+};
+use solana_program::sysvar::rent::Rent;
+
+pub fn upload_nft(
+    program_id: &Pubkey,
+    accounts: &[AccountInfo],
+    name: String,
+    symbol: String,
+    uri: String,
+    supply: u64,
+    decimals: u8,
+) -> ProgramResult {
+    // Get the accounts for the transaction
+    let accounts_iter = &mut accounts.iter();
+    let nft_account_info = next_account_info(accounts_iter)?;
+    let nft_mint_info = next_account_info(accounts_iter)?;
+    let nft_metadata_account_info = next_account_info(accounts_iter)?;
+    let nft_mint_authority_info = next_account_info(accounts_iter)?;
+    let nft_freeze_authority_info = next_account_info(accounts_iter)?;
+    let payer_info = next_account_info(accounts_iter)?;
+    let rent_info = next_account_info(accounts_iter)?;
+    let system_info = next_account_info(accounts_iter)?;
+    let token_metadata_program_info = next_account_info(accounts_iter)?;
+    let token_program_info = next_account_info(accounts_iter)?;
+
+    // Verify that the NFT account is owned by the program
+    if nft_account_info.owner != program_id {
+        return Err(ProgramError::IncorrectProgramId);
+    }
+
+    // Verify that the NFT mint is owned by the program
+    if nft_mint_info.owner != program_id {
+        return Err(ProgramError::IncorrectProgramId);
+    }
+
+    // Verify that the NFT metadata account is owned by the token metadata program
+    if nft_metadata_account_info.owner != &spl_token_metadata::id() {
+        return Err(ProgramError::IncorrectProgramId);
+    }
+
+    // Verify that the payer has sufficient balance
+    let rent = &Rent::from_account_info(rent_info)?;
+    let nft_account_lamports = rent
+        .minimum_balance(spl_token::state::Account::get_packed_len())
+        .max(1);
+    let payer_balance = payer_info.try_borrow_mut_lamports()?;
+    if *payer_balance < nft_account_lamports {
+        return Err(ProgramError::InsufficientFunds);
+    }
+
+    // Create the NFT metadata
+    let metadata_account = Metadata {
+        key: MetadataKey::new_v1(),
+        update_authority: *nft_mint_authority_info.key,
+        mint: *nft_mint
+
+
+Gordon Anderson
+Can you create the functions to allow for .m4a, .wav, .mp3, .aiff, .mp4, .png, .jpeg, .avi, uploads as NFT's?
+Certainly! To support multiple file types for NFT uploads, we can modify the upload_nft function to take in the file data as bytes, and then determine the file type based on the file extension. Here's how the updated upload_nft function might look like:
+
+rust
+Copy code
+use std::str;
+use std::str::FromStr;
+
+pub fn upload_nft(
+    program_id: &Pubkey,
+    accounts: &[AccountInfo],
+    name: String,
+    symbol: String,
+    file_data: Vec<u8>,
+    file_extension: String,
+    supply: u64,
+    decimals: u8,
+) -> ProgramResult {
+    // Get the accounts for the transaction
+    let accounts_iter = &mut accounts.iter();
+    let nft_account_info = next_account_info(accounts_iter)?;
+    let nft_mint_info = next_account_info(accounts_iter)?;
+    let nft_metadata_account_info = next_account_info(accounts_iter)?;
+    let nft_mint_authority_info = next_account_info(accounts_iter)?;
+    let nft_freeze_authority_info = next_account_info(accounts_iter)?;
+    let payer_info = next_account_info(accounts_iter)?;
+    let rent_info = next_account_info(accounts_iter)?;
+    let system_info = next_account_info(accounts_iter)?;
+    let token_metadata_program_info = next_account_info(accounts_iter)?;
+    let token_program_info = next_account_info(accounts_iter)?;
+
+    // Verify that the NFT account is owned by the program
+    if nft_account_info.owner != program_id {
+        return Err(ProgramError::IncorrectProgramId);
+    }
+
+    // Verify that the NFT mint is owned by the program
+    if nft_mint_info.owner != program_id {
+        return Err(ProgramError::IncorrectProgramId);
+    }
+
+    // Verify that the NFT metadata account is owned by the token metadata program
+    if nft_metadata_account_info.owner != &spl_token_metadata::id() {
+        return Err(ProgramError::IncorrectProgramId);
+    }
+
+    // Verify that the payer has sufficient balance
+    let rent = &Rent::from_account_info(rent_info)?;
+    let nft_account_lamports = rent
+        .minimum_balance(spl_token::state::Account::get_packed_len())
+        .max(1);
+    let payer_balance = payer_info.try_borrow_mut_lamports()?;
+    if *payer_balance < nft_account_lamports {
+        return Err(ProgramError::InsufficientFunds);
+    }
+
+    // Determine the file type based on the file extension
+    let file_type = match file_extension.as_str() {
+        "m4a" => "audio/mp4",
+        "wav" => "audio/wav",
+        "mp3" => "audio/mp3",
+        "aiff" => "audio/aiff",
+        "mp4" => "video/mp4",
+        "png" => "image/png",
+        "jpeg" => "image/jpeg",
+        "avi" => "video/x-msvideo",
+        _ => return Err(ProgramError::InvalidArgument),
+    };
+
+    // Upload the file to IPFS and get the CID
+    let ipfs_client = IpfsClient::new();
+    let cid = ipfs_client.add(&file_data, file_type)?;
+
+    // Create the NFT metadata
+    let metadata_account = Metadata {
+        key: MetadataKey::new_v1(),
+        update_authority: *nft_mint_authority_info.key,
+        mint: *nft_mint_info.key,
+        data: MetadataData {
+            name,
+            symbol,
+            uri: format!("ipfs://{}", cid),
+            seller_fee_basis_points: 0,
+            creators: vec![],
+        },
+        primary_sale_happened: false,
+
+
+
+Gordon Anderson
+Thanks, now lets allow for the NFT's to be staked for token rewards.
+Sure! To allow for the staking of NFT's for token rewards, we can add a stakeNFT function to the smart contract. This function will take in the NFT ID and the amount of tokens to stake as parameters, and will update the staking information for that NFT accordingly.
+
+Here's a possible implementation:
+
+rust
+Copy code
+#[derive(Accounts)]
+pub struct StakeNFT<'info> {
+    #[account(signer)]
+    pub artist: AccountInfo<'info>,
+    #[account(mut)]
+    pub nft_account: Box<Account<'info, NFT>>,
+    pub token_account: AccountInfo<'info>,
+    #[account(mut)]
+    pub staking_account: AccountInfo<'info>,
+    #[account(seeds = [b"staking".as_ref()], bump)]
+    pub staking_authority: AccountInfo<'info>,
+    pub amount: u64,
+}
+
+#[account]
+pub struct NFT {
+    pub file_hash: String,
+    pub staked_amount: u64,
+    pub staked_until: i64, // timestamp in seconds
+}
+
+#[derive(Accounts)]
+pub struct StakingPool<'info> {
+    #[account(mut)]
+    pub token_account: Box<Account<'info, TokenAccount>>,
+    pub nft_mint: AccountInfo<'info>,
+    pub staking_authority: AccountInfo<'info>,
+    #[account(signer)]
+    pub staker: AccountInfo<'info>,
+    #[account(mut)]
+    pub staking_account: AccountInfo<'info>,
+}
+
+#[derive(Accounts)]
+pub struct UnstakeNFT<'info> {
+    #[account(signer)]
+    pub artist: AccountInfo<'info>,
+    #[account(mut)]
+    pub nft_account: Box<Account<'info, NFT>>,
+    pub token_account: AccountInfo<'info>,
+    #[account(mut)]
+    pub staking_account: AccountInfo<'info>,
+    #[account(seeds = [b"staking".as_ref()], bump)]
+    pub staking_authority: AccountInfo<'info>,
+}
+
+#[program]
+pub mod staking {
+    use super::*;
+    use std::convert::TryInto;
+
+    // The number of seconds in a day
+    const SECONDS_PER_DAY: i64 = 24 * 60 * 60;
+
+    #[access_control(StakingPool::accounts(&ctx, &instruction))]
+    pub fn stake_nft(
+        ctx: Context<StakeNFT>,
+        instruction: u64,
+        staking_period_days: i64,
+    ) -> ProgramResult {
+        let now = Clock::get()?.unix_timestamp;
+
+        // Ensure the staking period is valid
+        if staking_period_days <= 0 {
+            return Err(ProgramError::InvalidArgument);
+        }
+
+        // Calculate the staking period in seconds
+        let staking_period = staking_period_days * SECONDS_PER_DAY;
+
+        // Ensure the staking period is not too long
+        if staking_period > 365 * SECONDS_PER_DAY {
+            return Err(ProgramError::InvalidArgument);
+        }
+
+        // Ensure the NFT account belongs to the artist
+        if !&ctx.accounts.nft_account.owner.eq(&ctx.accounts.artist.key()) {
+            return Err(ProgramError::InvalidArgument);
+        }
+
+        // Ensure the staking account belongs to the staking authority
+        if !&ctx.accounts.staking_account.owner.eq(&staking_authority.key()) {
+            return Err(ProgramError::InvalidArgument);
+        }
+
+        // Ensure the staking authority has signed the transaction
+        if !&ctx.accounts.staking_authority.eq(&ctx.accounts.artist) {
+            return Err(ProgramError::InvalidArgument);
+        }
+
+        // Transfer the tokens from the artist's account to the staking account
+        let
+
+
+
+Gordon Anderson
+Finally, lets create a secure NFT minting system for the artists to be able to mint their NFT's, sell, trade, and stake them.
+Certainly, here's an implementation of an NFT minting system for the artists to mint, sell, trade, and stake their NFTs. This smart contract will use the spl-token and solana-program-library libraries to manage the tokens.
+
+rust
+Copy code
+// Required program libraries
+use solana_program::{
+    account_info::{next_account_info, AccountInfo},
+    entrypoint::ProgramResult,
+    msg,
+    program_error::ProgramError,
+    pubkey::Pubkey,
+    system_instruction,
+    sysvar::{rent::Rent, Sysvar},
+};
+
+use spl_token::state::{Account as TokenAccount, Mint};
+
+// Mint NFTs with associated token accounts to an artist
+pub fn process_mint_nft(
+    accounts: &[AccountInfo],
+    nft_metadata: String,
+    nft_symbol: String,
+    nft_name: String,
+    nft_uri: String,
+    initial_supply: u64,
+) -> ProgramResult {
+    // Retrieve the accounts necessary for the minting process
+    let accounts_iter = &mut accounts.iter();
+    let artist_account = next_account_info(accounts_iter)?;
+    let payer_account = next_account_info(accounts_iter)?;
+    let nft_mint_account = next_account_info(accounts_iter)?;
+    let nft_account = next_account_info(accounts_iter)?;
+    let token_program_account = next_account_info(accounts_iter)?;
+    let rent_account = next_account_info(accounts_iter)?;
+    let system_program_account = next_account_info(accounts_iter)?;
+
+    // Verify that the payer is a signer of the transaction
+    if !payer_account.is_signer {
+        return Err(ProgramError::MissingRequiredSignature);
+    }
+
+    // Verify that the system program is correct
+    if *system_program_account.key != system_instruction::id() {
+        return Err(ProgramError::IncorrectProgramId);
+    }
+
+    // Verify that the token program account is correct
+    if *token_program_account.key != spl_token::id() {
+        return Err(ProgramError::IncorrectProgramId);
+    }
+
+    // Verify that the rent sysvar is correct
+    let rent = &Rent::from_account_info(rent_account)?;
+    if !rent.is_exempt(nft_mint_account.lamports(), nft_mint_account.data_len()) {
+        return Err(ProgramError::AccountNotRentExempt);
+    }
+
+    // Create the mint and token accounts
+    let decimals = 0;
+    let mint_authority = artist_account.key;
+    let mint = Mint::new(&spl_token::id(), nft_mint_account.key, decimals, mint_authority)?;
+    let mut mint_data = nft_metadata.into_bytes();
+    mint_data.extend_from_slice(&[0; 1]);
+    Mint::pack(mint_data.as_slice(), &mut mint.data)?;
+
+    let nft_account_owner = artist_account.key;
+    let mut nft_account_data = nft_uri.into_bytes();
+    nft_account_data.extend_from_slice(&[0; 1]);
+    TokenAccount::new(
+        &spl_token::id(),
+        nft_account.key,
+        &mint.pubkey(),
+        nft_account_owner,
+    )
+    .pack_into_slice(&mut nft_account.data)?;
+    nft_account.set_owner(nft_account_owner)?;
+
+    // Initialize the NFT mint
+    spl_token::processor::initialize_mint(
+        token_program_account.key,
+        nft_mint_account.key,
+        mint_authority,
+        Some(mint_data.as_slice()),
+        decimals,
+    )?;
+
+    // Mint initial supply of NFTs to the artist
+    spl_token::processor::mint_to(
+        token_program_account.key,
+        nft_mint_account.key,
+        nft_account.key,
+        mint_authority,
+        &[],
+        initial_supply,
+    )
