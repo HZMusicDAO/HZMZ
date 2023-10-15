@@ -1,0 +1,87 @@
+use solana_program::{
+    account_info::{next_account_info, AccountInfo},
+    entrypoint::ProgramResult,
+    msg,
+    program_error::ProgramError,
+    pubkey::Pubkey,
+    sysvar::{clock::Clock, rent::Rent, Sysvar},
+};
+
+use std::time::{Duration, UNIX_EPOCH};
+
+// Define the state struct for a staking account
+pub struct StakingAccount {
+    pub owner: Pubkey,
+    pub staked_tokens: u64,
+    pub staking_start_timestamp: i64,
+    pub compounding_daily_rate: f64,
+    pub current_apr: f64,
+}
+
+// Define the entrypoint for staking tokens
+pub fn stake_tokens(
+    program_id: &Pubkey,
+    accounts: &[AccountInfo],
+    amount: u64,
+) -> ProgramResult {
+    // Get the accounts for the transaction
+    let accounts_iter = &mut accounts.iter();
+    let staking_account_info = next_account_info(accounts_iter)?;
+    let artist_token_account_info = next_account_info(accounts_iter)?;
+    let rent_info = next_account_info(accounts_iter)?;
+    let clock_info = next_account_info(accounts_iter)?;
+    let system_info = next_account_info(accounts_iter)?;
+    let program_info = next_account_info(accounts_iter)?;
+
+    // Verify that the staking account is owned by the staker
+    if staking_account_info.owner != program_id {
+        return Err(ProgramError::IncorrectProgramId);
+    }
+
+    // Verify that the artist token account belongs to the artist
+    let artist_token_account_owner = artist_token_account_info.owner;
+    if artist_token_account_owner != program_id {
+        return Err(ProgramError::IncorrectProgramId);
+    }
+
+    // Verify that the artist token account has sufficient balance
+    let artist_token_balance = artist_token_account_info.try_borrow_mut_lamports()?;
+    if *artist_token_balance < amount {
+        return Err(ProgramError::InsufficientFunds);
+    }
+
+    // Verify that the staking account is not already staked
+    let staking_account_data = staking_account_info.try_borrow_mut_data()?;
+    let staking_account_state = StakingAccount::unpack(&staking_account_data)?;
+    if staking_account_state.staked_tokens > 0 {
+        return Err(ProgramError::AccountAlreadyInitialized);
+    }
+
+    // Calculate the rent-exempt balance for the staking account
+    let rent = &Rent::from_account_info(rent_info)?;
+    let staking_account_lamports = rent
+        .minimum_balance(StakingAccount::get_packed_len())
+        .max(1);
+
+    // Create the staking account
+    **artist_token_balance -= amount;
+    let clock = Clock::from_account_info(clock_info)?;
+    let staking_account = StakingAccount {
+        owner: *artist_token_account_owner,
+        staked_tokens: amount,
+        staking_start_timestamp: clock.unix_timestamp,
+        compounding_daily_rate: 0.00205, // 75% APR
+        current_apr: 1.75, // 75% APR
+    };
+    StakingAccount::pack(staking_account, &mut staking_account_data)?;
+
+    // Transfer the staking account balance to the system account
+    **system_info.try_borrow_mut_lamports()? += staking_account_lamports;
+
+    // Log a success message and return
+    msg!("Staked {} tokens for staker {}", amount, artist_token_account_owner);
+    Ok(())
+}
+
+// Define the entrypoint for unstaking tokens
+pub
