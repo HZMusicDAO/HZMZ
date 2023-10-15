@@ -1,0 +1,104 @@
+Lets add a smart contract to be able to swap HZ for other tokens, using RENVM as our bridge to create interoperability between blockchains.
+Sure, we can create a smart contract to enable swapping of HZ tokens with other tokens using RENVM as the bridge.
+
+To do this, we need to integrate the RENVM SDK into our smart contract. The RENVM SDK allows us to communicate with the RENVM network and to swap tokens across different blockchains.
+
+Here is an example code for a smart contract that allows swapping of HZ tokens with Ethereum's native token (ETH) using RENVM:
+
+rust
+Copy code
+use renvm_sdk::{
+    GatewayInterface, 
+    GatewayRequest, 
+    GatewayResponse, 
+    GatewayTransport, 
+    GatewayTransportError,
+};
+
+#[program]
+mod hz_swap {
+    use super::*;
+
+    #[state]
+    pub struct HZSwap {
+        pub owner: Pubkey,
+        pub hz_account: Pubkey,
+        pub eth_account: Pubkey,
+        pub renvm_gateway: Pubkey,
+    }
+
+    impl HZSwap {
+        pub fn new(ctx: Context<Initialize>, owner: Pubkey, hz_account: Pubkey, eth_account: Pubkey, renvm_gateway: Pubkey) -> ProgramResult {
+            let hz_swap = &mut ctx.accounts.hz_swap;
+            hz_swap.owner = owner;
+            hz_swap.hz_account = hz_account;
+            hz_swap.eth_account = eth_account;
+            hz_swap.renvm_gateway = renvm_gateway;
+            Ok(())
+        }
+
+        pub fn swap_to_eth(&mut self, ctx: Context<SwapToEth>, hz_amount: u64) -> ProgramResult {
+            let request = GatewayRequest::new(
+                self.hz_account, 
+                self.eth_account, 
+                hz_amount, 
+                GatewayInterface::Eth,
+            );
+            let response = self.renvm_gateway.request(&request)?;
+
+            if response.get_network() == GatewayInterface::Eth {
+                let mut eth_account = ctx.accounts.eth_account;
+                eth_account.amount += response.get_amount();
+            } else {
+                return Err(ProgramError::InvalidAccountData);
+            }
+
+            let mut hz_account = ctx.accounts.hz_account;
+            hz_account.amount -= hz_amount;
+
+            Ok(())
+        }
+
+        pub fn swap_to_hz(&mut self, ctx: Context<SwapToHZ>, eth_amount: u64) -> ProgramResult {
+            let request = GatewayRequest::new(
+                self.eth_account, 
+                self.hz_account, 
+                eth_amount, 
+                GatewayInterface::Btc,
+            );
+            let response = self.renvm_gateway.request(&request)?;
+
+            if response.get_network() == GatewayInterface::Btc {
+                let mut hz_account = ctx.accounts.hz_account;
+                hz_account.amount += response.get_amount();
+            } else {
+                return Err(ProgramError::InvalidAccountData);
+            }
+
+            let mut eth_account = ctx.accounts.eth_account;
+            eth_account.amount -= eth_amount;
+
+            Ok(())
+        }
+    }
+
+    #[derive(Accounts)]
+    pub struct Initialize<'info> {
+        #[account(init, payer = user, space = 8 + 32 + 32 + 32)]
+        pub hz_swap: Account<'info, HZSwap>,
+        #[account(mut)]
+        pub user: Signer<'info>,
+        pub system_program: Program<'info, System>,
+    }
+
+    #[derive(Accounts)]
+    pub struct SwapToEth<'info> {
+        #[account(mut)]
+        pub hz_account: Signer<'info>,
+        #[account(mut)]
+        pub eth_account: Signer<'info>,
+        #[account(mut)]
+        pub hz_swap: Signer<'info>,
+        #[account(mut)]
+        pub renvm_gateway: AccountInfo<'info>,
+        pub system_program
