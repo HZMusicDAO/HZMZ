@@ -1,0 +1,38 @@
+Next, lets create a smart contract to be able to send and receive HZ tokens between users.
+Sure, we can create a smart contract that allows users to send and receive HZ tokens between each other. Here's an example of what the code for such a contract might look like:
+
+typescript
+Copy code
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.0;
+
+import "@solana/spl-token/program-solana/Token.sol";
+
+contract HZTransfer {
+    Token public hzToken;
+
+    constructor(address _hzTokenAddress) {
+        hzToken = Token(_hzTokenAddress);
+    }
+
+    function transferHZ(address _to, uint256 _amount) public {
+        require(hzToken.transferFrom(msg.sender, _to, _amount), "Transfer failed");
+    }
+
+    function approveHZ(address _spender, uint256 _amount) public {
+        require(hzToken.approve(_spender, _amount), "Approval failed");
+    }
+
+    function getHZBalance(address _address) public view returns (uint256) {
+        return hzToken.balanceOf(_address);
+    }
+}
+This contract uses the Solana SPL Token program to interact with the HZ token. The constructor function takes in the address of an existing HZ token contract, and creates a reference to that contract within the transfer contract.
+
+The transferHZ function allows a user to send HZ tokens to another user, by transferring tokens from the caller's address to the specified _to address. The function checks that the transfer was successful, and reverts the transaction if it fails.
+
+The approveHZ function allows a user to approve another address (e.g. a smart contract) to spend HZ tokens on their behalf. This is necessary for certain functions that require the user's tokens to be transferred on their behalf.
+
+Finally, the getHZBalance function allows a user to view their current balance of HZ tokens at a given address.
+
+Note that this contract is just an example, and may need to be modified depending on the specific requirements of the project.
