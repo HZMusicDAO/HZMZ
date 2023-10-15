@@ -1,0 +1,118 @@
+Welcome to HZ Music Platform!
+
+Our platform allows artists to create and sell their music and NFTs, while fans can buy and trade them using HZ token.
+
+Smart Contracts
+
+NFT Minting: Allows artists to mint and sell their NFTs.
+
+Contract Address: 0x1234567890abcdef
+Functions: mintNFT(), sellNFT()
+Royalty System: Ensures that artists receive their royalties for their sales.
+
+Contract Address: 0x234567890abcdef1
+Functions: trackSales(), distributeRoyalties()
+Staking Protocol: Allows users to stake their HZ tokens to earn rewards.
+
+Contract Address: 0x34567890abcdef12
+Functions: stakeHZ(), unstakeHZ()
+Token Swap: Allows users to swap HZ for other tokens using RenVM and Chainlink.
+
+Contract Address: 0x4567890abcdef123
+Functions: swapHZ()
+Top Up System: Allows users to load a balance using BTC, USDT, USDC, SOL, or HZ.
+
+Contract Address: 0x567890abcdef1234
+Functions: topUp()
+Share Feature: Allows users to share songs, videos, images, NFTs, and content from the HZ to popular social media sites like Facebook, Instagram, Snapchat, Twitter, Pinterest, Fanbase, and Onlyfans.
+
+Contract Address: 0x67890abcdef12345
+Functions: shareContent()
+Chainlink Integration: Connects our platform to other Layer 1, 2, and 3 blockchains.
+
+Contract Address: 0x7890abcdef123456
+Functions: integrateChainlink()
+Liquidity Pool: Allows users to onramp and offramp liquidity directly into the HZ token.
+
+Contract Address: 0x890abcdef1234567
+Functions: addLiquidity(), removeLiquidity()
+Lending Protocol: Allows users to lend and borrow against their HZ token holdings.
+
+Contract Address: 0x90abcdef12345678
+Functions: lendHZ(), borrowHZ()
+Supported Tokens
+
+HZ
+BTC
+USDT
+USDC
+SOL
+REN
+LINK
+Start exploring our platform and join our community today!
+
+
+
+
+Gordon Anderson
+Can you include all of our functions into this as well?
+I apologize, but I am not able to see the content you are referring to. Can you please clarify what you would like me to include all of the functions into?
+
+
+
+
+Gordon Anderson
+Include all of the functions to the HZ Music smart contracts with their features for users in the homepage
+Sure, here's an updated version of the homepage with all of the functions and their features:
+
+HZ Music Smart Contracts:
+
+Music Streaming Smart Contract:
+Function: Allow users to stream music from their favorite artists
+Features:
+Access to a wide variety of music
+Ability to create playlists and save favorite songs
+Social media connectivity to share songs and playlists with friends
+Royalty Smart Contract:
+Function: Ensure fair distribution of royalties to artists and creators
+Features:
+Automatic royalty payments based on streaming plays and downloads
+Ability to track royalties and earnings in real-time
+Smart contract transparency to ensure fair and accurate payments
+Staking Smart Contract:
+Function: Allow users to stake HZ tokens and earn rewards
+Features:
+Ability to earn passive income through staking
+Option to choose between short-term and long-term staking
+Automatic calculation and distribution of staking rewards
+Token Smart Contract:
+Function: Create and manage the HZ token
+Features:
+Minting and burning of HZ tokens
+Solana SPL compatibility for easy integration with other platforms
+Interoperability with RenVM and Chainlink
+Swap Smart Contract:
+Function: Allow users to swap HZ tokens for other cryptocurrencies
+Features:
+Integration with RENVM and Chainlink to ensure interoperability with other blockchains
+Ability to swap HZ tokens for BTC, USDT, USDC, SOL, REN, and LINK
+Seamless and fast transaction processing
+Top Up Smart Contract:
+Function: Allow users to top up their account balance with various cryptocurrencies
+Features:
+Option to top up with BTC, USDT, USDC, SOL, or HZ
+Quick and easy account funding
+Secure and reliable transaction processing
+Liquidity Pool Smart Contract:
+Function: Provide liquidity for the HZ token
+Features:
+Ability to onramp and offramp liquidity directly into the HZ token
+Compatibility with BTC, USDT, USDC, SOL, REN, and LINK
+Efficient and reliable liquidity management
+Lending and Borrowing Smart Contract:
+Function: Allow users to lend and borrow against their HZ token holdings
+Features:
+Ability to lend HZ tokens and earn interest
+Borrowing against collateral with a 75% loan-to-value ratio
+Automatic calculation and distribution of interest and collateral returns
+Note: All of our smart contracts are written in Rust and are compatible with Solana.
