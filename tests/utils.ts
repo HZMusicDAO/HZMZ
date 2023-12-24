@@ -65,10 +65,10 @@ const findGameTreasuryAcc = ()=> {
 // Types
 
 type TFinalized = { authority: PublicKey };
-type TInitialized = { owner: PublicKey, totalSupply: Number, seedBalance: Number, mrfWallet: PublicKey, bkWallet: PublicKey, shiragaWallet: PublicKey };
+type TInitialized = { owner: PublicKey, totalSupply: Number, seedBalance: Number,  bkWallet: PublicKey };
 type TNFTMinted = { nftNum: Number, holder: PublicKey, uri: String };
 type TFeeUpdated = { fee: Number };
-type TDevWithdrawn = { owner: PublicKey, devBalance: Number; mrfAmount: Number, bkAmount: Number, shiragaAmount:Number, authority: PublicKey };
+type TDevWithdrawn = { owner: PublicKey, devBalance: Number; bkAmount: Number, authority: PublicKey };
 type TUserWithdrawn = { owner: PublicKey, amount: Number; lastInteraction: Number, sellTotal: Number };
 type TSell= { owner: PublicKey, sellTotal: Number, nftHolder:Boolean, lastInteraction: Number };
 

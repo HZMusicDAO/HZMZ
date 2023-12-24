@@ -92,7 +92,7 @@ describe("solana_nft_test", async () => {
     console.log("  treasuryDataPublic address ", (await treasuryDataPublic).toBase58());
     
     const tx = await program.methods
-      .initialize(new anchor.BN(1e9), MRF_WALLET, BK_WALLET, SHIRAGA_WALLET, new anchor.BN(4444))
+      .initialize(new anchor.BN(1e9), BK_WALLET, new anchor.BN(4444))
       .accounts({
         contractData: await contractDataPublic,
         treasury: await treasuryDataPublic,
@@ -278,9 +278,7 @@ describe("solana_nft_test", async () => {
         treasury: gameTreasuryAccount,
         authority: wallet.publicKey,
         gameStateAccount: gameStateAccount,
-        mrfAccount: MRF_WALLET,
         bkAccount: BK_WALLET,
-        shiragaAccount: SHIRAGA_WALLET,
         systemProgram: SystemProgram.programId,
       })
       .rpc();
