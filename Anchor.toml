@@ -1,22 +1,12 @@
-[toolchain]
-
-[features]
-seeds = false
-skip-lint = false
-
-[programs.localnet]
-solana_nft = "B9n6kvLkZGATZCvL6H2ujjzQE28jvbT2k6N1vKt9hC6L"
-
 [programs.devnet]
-solana_nft = "B9n6kvLkZGATZCvL6H2ujjzQE28jvbT2k6N1vKt9hC6L"
+metaverse_staking = "EXZJ3cCRD8dxmTYPxY4nWEWjGiwiW1U9yz2jzJzngnLg"
 
 [registry]
-url = "https://api.apr.dev"
+url = "https://anchor.projectserum.com"
 
 [provider]
-cluster = "localnet"
-wallet = "/home/ubuntu/.config/solana/id.json"
+cluster = "devnet"
+wallet = "/Users/pronin/.config/solana/devnet.json"
 
 [scripts]
-test = "yarn run ts-mocha -p ./tsconfig.json -t 1000000 tests/**/*.ts"
-
+test = "yarn run ts-mocha -p ./tsconfig.json -t 1000000 tests/*"
